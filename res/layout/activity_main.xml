@@ -12,14 +12,15 @@
     <ImageView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:contentDescription="@string/app_info"
+        android:layout_weight="0.15"
+        android:contentDescription="@string/app_name"
         android:scaleType="fitCenter"
         android:src="@drawable/ic_launcher" />
 
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="0dip"
-        android:layout_weight="1.0"
+        android:layout_weight="0.54"
         android:text="@string/app_info"
         android:textSize="20sp" />
 

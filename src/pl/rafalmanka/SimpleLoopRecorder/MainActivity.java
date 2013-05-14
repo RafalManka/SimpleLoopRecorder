@@ -26,62 +26,22 @@ public class MainActivity extends Activity {
 			.getExternalStorageDirectory().getPath() + "/AudioRecorder/temp/";
 	private static final String FINAL_FOLDER = Environment
 			.getExternalStorageDirectory().getPath() + "/AudioRecorder/final/";
-	private static int[] mSampleRates = new int[] { 8000, 11025, 22050, 44100 };
-	private static short[] audioFormatEncoding = new short[] {
-			AudioFormat.ENCODING_PCM_16BIT, AudioFormat.ENCODING_PCM_8BIT };
-	private static short[] audioFormatChannel = new short[] {
-			AudioFormat.CHANNEL_IN_MONO, AudioFormat.CHANNEL_IN_STEREO };
+	
 	private int bufferSize = 0;
 	private int RECORDER_SAMPLERATE = 0;
-	private AudioRecord recorder = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);		
-		
+		setContentView(R.layout.activity_main);			
 		getProperFormats();
+		
+		RECORDER_SAMPLERATE = ((LoopRecorderApp) getApplication()).getAudioRecorder().getSampleRate();
+		bufferSize = ((LoopRecorderApp) getApplication()).getBufferSize();
 	}
 	
 	private void getProperFormats() {
-		for (int rate : mSampleRates) {
-			for (short audioFormat : audioFormatEncoding) {
-				for (short channelConfig : audioFormatChannel) {
-					try {
-						Log.d(TAG, "Attempting rate " + rate + "Hz, bits: "
-								+ audioFormat + ", channel: " + channelConfig);
-						bufferSize = AudioRecord.getMinBufferSize(rate,
-								channelConfig, audioFormat);
-
-						if (bufferSize != AudioRecord.ERROR_BAD_VALUE) {
-
-							recorder = new AudioRecord(AudioSource.DEFAULT,
-									rate, channelConfig, audioFormat,
-									bufferSize);
-
-							if (recorder.getState() == AudioRecord.STATE_INITIALIZED) {
-
-								Log.d(TAG, "rate: " + rate);
-								Log.d(TAG, "audioFormatEncoding: "
-										+ audioFormat);
-								Log.d(TAG, "audioFormatChannel: "
-										+ channelConfig);
-
-								RECORDER_SAMPLERATE = rate;
-								RECORDER_BPP = audioFormat;
-								return;
-
-							}
-
-						}
-					} catch (Exception e) {
-						Log.d(TAG, rate + "Exception, keep trying.", e);
-					}
-				}
-			}
-		}
-		Log.d(TAG, "recorder state: " + recorder.getState());
-		Log.d(TAG, "bufferSize: " + bufferSize);
+		
 	}
 	public void startRecording(View v) { 
 		Intent intent = new Intent(this,RecordingService.class);
@@ -205,39 +165,6 @@ public class MainActivity extends Activity {
 		return true;
 	}
 	
-	/*private void copyWaveFile(String inFilename, String outFilename) {
-	FileInputStream in = null;
-	FileOutputStream out = null;
-	long totalAudioLen = 0;
-	long totalDataLen = totalAudioLen + 36;
-	long longSampleRate = RECORDER_SAMPLERATE;
-	int channels = 2;
-	long byteRate = RECORDER_BPP * RECORDER_SAMPLERATE * channels / 8;
-
-	byte[] data = new byte[bufferSize];
-
-	try {
-		in = new FileInputStream(inFilename);
-		out = new FileOutputStream(outFilename);
-		totalAudioLen = in.getChannel().size();
-		totalDataLen = totalAudioLen + 36;
-
-		Log.d(TAG, "File size: " + totalDataLen);
-
-		WriteWaveFileHeader(out, totalAudioLen, totalDataLen,
-				longSampleRate, channels, byteRate);
-
-		while (in.read(data) != -1) {
-			out.write(data);
-		}
-
-		in.close();
-		out.close();
-	} catch (FileNotFoundException e) {
-		e.printStackTrace();
-	} catch (IOException e) {
-		e.printStackTrace();
-	}
-}*/
+	
 
 }

@@ -1,15 +1,13 @@
 package pl.rafalmanka.SimpleLoopRecorder;
-
-import java.io.File;
+ 
+import java.io.File; 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
 import android.app.Service;
 import android.content.Intent;
-import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder.AudioSource;
 import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
@@ -19,27 +17,19 @@ public class RecordingService extends Service {
 
 	private static final String TEMP_FOLDER = Environment
 			.getExternalStorageDirectory().getPath() + "/AudioRecorder/temp/";
-	private AudioRecord recorder = null;
 	private static final String TAG = "RecordingService";
-	private int bufferSize = 0;
-	private static int[] mSampleRates = new int[] { 8000, 11025, 22050, 44100 };
-	private static short[] audioFormatEncoding = new short[] {
-			AudioFormat.ENCODING_PCM_16BIT, AudioFormat.ENCODING_PCM_8BIT };
-	private static short[] audioFormatChannel = new short[] {
-			AudioFormat.CHANNEL_IN_MONO, AudioFormat.CHANNEL_IN_STEREO };
+	private int bufferSize = 0;	
 	private Thread recordingThread = null;
 	private boolean isRecording = false;
+	AudioRecord recorder;
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		
-		Log.d(TAG, "onCreated");
-		if(recorder==null){
-			Log.d(TAG, "audio session: ");
-			getProperFormats();
-		}
-
+		Log.d(TAG, "onCreated");	
+		recorder = ((LoopRecorderApp) getApplication()).getAudioRecorder();
+		Log.d(TAG, "recorder set");	
 		startRecording();
 	}
 
@@ -48,11 +38,12 @@ public class RecordingService extends Service {
 		Log.d(TAG, "startRecording");
 		Toast.makeText(RecordingService.this, "START recording",
 				Toast.LENGTH_LONG).show();
-		Log.d(TAG, "Audio recorder created");
+		Log.d(TAG, "Audio recorder created");		
 		int i = recorder.getState();
 		if (i == 1)
 			recorder.startRecording();
-		Log.d(TAG, "recorder state is " + recorder.getState());
+		
+		Log.d(TAG, "recorder state is " + i);
 		isRecording = true;
 		recordingThread = new Thread(new Runnable() {
 			@Override
@@ -94,7 +85,7 @@ public class RecordingService extends Service {
 				Thread.sleep(1000);
 				Log.d(TAG, "sleep for a second");
 			} catch (InterruptedException e1) {
-				Log.d(TAG, "Sleeping has been interrupted exception");
+				Log.e(TAG, "Sleeping has been interrupted exception");
 				e1.printStackTrace();
 			}
 			try {
@@ -126,10 +117,10 @@ public class RecordingService extends Service {
 		while (true) {
 			File dir = new File(TEMP_FOLDER);
 			File[] files = dir.listFiles();
-			Log.e(TAG, "checking directory for old files");
+			Log.d(TAG, "checking directory for old files");
 			File lastModifiedFile = files[0];
-			Log.e(TAG, "putting them into array");
-			Log.e(TAG, "ordering files by date modified");
+			Log.d(TAG, "putting them into array");
+			Log.d(TAG, "ordering files by date modified");
 			for (int i = 1; i < files.length; i++) {
 				if (lastModifiedFile.lastModified() > files[i].lastModified()) {
 					lastModifiedFile = files[i];
@@ -137,18 +128,18 @@ public class RecordingService extends Service {
 			}
 
 			if (lastModifiedFile.lastModified() < (System.currentTimeMillis() - 300000)) {
-				Log.e(TAG,
+				Log.d(TAG,
 						"deleting old file: "
 								+ lastModifiedFile.getAbsolutePath());
 				if (!lastModifiedFile.exists()) {
-					Log.e(TAG, "file does not exist");
+					Log.d(TAG, "file does not exist");
 				} else {
 					boolean deleted = lastModifiedFile.delete();
-					Log.e(TAG, "file deleted=" + deleted);
+					Log.d(TAG, "file deleted=" + deleted);
 				}
 
 			} else {
-				Log.e(TAG, "no old files found");
+				Log.d(TAG, "no old files found");
 				break;
 			}
 		}
@@ -166,45 +157,7 @@ public class RecordingService extends Service {
 		return filename;
 	}
 
-	private void getProperFormats() {
-		for (int rate : mSampleRates) {
-			for (short audioFormat : audioFormatEncoding) {
-				for (short channelConfig : audioFormatChannel) {
-					try {
-						Log.d(TAG, "Attempting rate " + rate + "Hz, bits: "
-								+ audioFormat + ", channel: " + channelConfig);
-						bufferSize = AudioRecord.getMinBufferSize(rate,
-								channelConfig, audioFormat);
-
-						if (bufferSize != AudioRecord.ERROR_BAD_VALUE) {
-
-							recorder = new AudioRecord(AudioSource.DEFAULT,
-									rate, channelConfig, audioFormat,
-									bufferSize);
-
-							if (recorder.getState() == AudioRecord.STATE_INITIALIZED) {
-
-								Log.d(TAG, "rate: " + rate);
-								Log.d(TAG, "audioFormatEncoding: "
-										+ audioFormat);
-								Log.d(TAG, "audioFormatChannel: "
-										+ channelConfig);
-								return;
-
-							}
-
-						}
-					} catch (Exception e) {
-						Log.d(TAG, rate + "Exception, keep trying.", e);
-					}
-				}
-			}
-		}
-
-		Log.d(TAG, "recorder state: " + recorder.getState());
-
-		Log.d(TAG, "bufferSize: " + bufferSize);
-	}
+	
 
 	@Override
 	public void onDestroy() {
